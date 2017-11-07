@@ -1,6 +1,14 @@
 # Node Backend for Disclose
 
-Backend service for handling request from the android app and the frontend web app. 
+Backend service for handling request from the android app and the frontend web app.
+
+## Docker
+You can choose to use this app via docker. To do so execute these commands:
+```
+  cd Node-Backend
+  docker build ./ --tag backend:latest
+  docker run -it -p 4000:4000 -v $(pwd)/backend:/backend backend:latest
+```
 
 ## Requirements
 - NodeJS (runtime)
