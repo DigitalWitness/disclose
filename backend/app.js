@@ -1,4 +1,5 @@
 var express = require('express');
+var cors = require('cors');
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
@@ -11,6 +12,17 @@ var users = require('./routes/users');
 var app = express();
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/test'); // Change later to dev db.
+
+var whitelist = ['http://0.0.0.0:4000', 'http://localhost:4000']
+var corsOptionsDelegate = function (req, callback) {
+  var corsOptions;
+  if (whitelist.indexOf(req.header('Origin')) !== -1) {
+    corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response 
+  }else{
+    corsOptions = { origin: false } // disable CORS for this request 
+  }
+  callback(null, corsOptions) // callback expects two parameters: error and options 
+}
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
