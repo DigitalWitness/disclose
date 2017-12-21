@@ -1,3 +1,5 @@
+console.log("\nSnitches get stitches\n")
+
 var express = require('express');
 var cors = require('cors');
 var path = require('path');
@@ -5,23 +7,32 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var passport = require('passport');
+var session      = require('express-session');
+var flash    = require('connect-flash');
 
 var index = require('./routes/index');
-var users = require('./routes/users');
 
 var app = express();
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/test'); // Change later to dev db.
+require('./config/passport')(passport); // pass passport for configuration
+
+// required for passport
+app.use(session({ secret: 'ilovescotchscotchyscotchscotch', cookie:{_expires : 10000000} })); // session secret
+app.use(passport.initialize());
+app.use(passport.session()); // persistent login sessions
+app.use(flash()); // use connect-flash for flash messages stored in session
 
 var whitelist = ['http://0.0.0.0:4000', 'http://localhost:4000']
 var corsOptionsDelegate = function (req, callback) {
   var corsOptions;
   if (whitelist.indexOf(req.header('Origin')) !== -1) {
-    corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response 
+    corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response
   }else{
-    corsOptions = { origin: false } // disable CORS for this request 
+    corsOptions = { origin: false } // disable CORS for this request
   }
-  callback(null, corsOptions) // callback expects two parameters: error and options 
+  callback(null, corsOptions) // callback expects two parameters: error and options
 }
 
 // view engine setup
@@ -37,10 +48,17 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
-app.use('/users', users);
 
 // Additional routes.
 require('./routes/submission.js')(app);
+require('./routes/user')(app, passport);
+
+app.options("/*", function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+  res.send(200);
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
