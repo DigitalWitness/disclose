@@ -29,3 +29,11 @@ Finally, for running the application itself.
 npm install
 bin/www
 ```
+# Running on Ubuntu/Linux
+
+Ubuntu and Linux use the Google DNS by default (8.8.8.X). This is blocked by GTRI. The Node-Backend can still be run by changing the DNS server to GTRIs:
+
+Edit the /etc/resolv.conf file and add the following line:
+```
+DOCKER_OPTS="--dns=130.207.199.54"
+```
