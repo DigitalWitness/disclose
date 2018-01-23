@@ -4,10 +4,12 @@ const Media = require('./media.js').schema;
 
 var Submission = mongoose.Schema({
 	user: String,
-	datetime: String,
+	datetime: {type : Date, default: Date.now},
+	submission_id: String,
+	location: Object,
 	content : {
-		messages : [Messages],
-		media: [Media] 
+		messages:[Messages],
+		media: [Media],
 	}
 },
 {
