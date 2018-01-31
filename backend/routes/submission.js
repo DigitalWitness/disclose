@@ -64,8 +64,73 @@ module.exports = function(app) {
             });
     });
 
+    app.get('/api/submission/log/:submission_id', cors(corsOptionsDelegate), function(req, res) {
+        // Need to redesign to handle and return multiple log files.
+        try {
+            SubmissionFile.findOne({submission_id : req.params.submission_id},
+                function(err, submission) {
+                    if (err) {
+                        console.log("1. " + err);
+                        res.send({"success": false, "message":"Download failed."});
+                    }
+                    else {
+                        if (submission == null) {
+                            res.json({"success": false, "message":"Submission GUID not found."})
+                        }
+                        else {
+                            console.log(submission)
+                            res.sendFile(submission.file.path, { root: path.join(__dirname, '../') });
+                        }
+                    }
+                });
+        }
+        catch (err) {
+            console.log("Submission GUID not found");
+            console.log(err);
+            res.send({"success": false, "message":err});
+        }
+    });
+
+    app.get('/api/file/:submission_id', cors(corsOptionsDelegate), function(req,res) {
+        SubmissionFile.find({submission_id : req.params.submission_id}, {'file.filename': true, '_id': false},
+            function(err, submission) {
+                if (err) {
+                    console.log("1. " + err);
+                    res.send({"success": false, "message":"Download failed."});
+                }
+                else {
+                    if (submission == null) {
+                        res.json({"success": false, "message":"Submission GUID not found."})
+                    }
+                    else {
+                        res.json(submission);
+                    }
+                }
+            }
+        );
+    });
+
+    app.get('/api/file/photo/:submission_id/:filename', cors(corsOptionsDelegate), function(req, res) {
+        SubmissionFile.findOne({submission_id : req.params.submission_id, "file.filename": req.params.filename},
+            function(err, submission) {
+                if (err) {
+                    console.log("1. " + err);
+                    res.send({"success": false, "message":"Download failed."});
+                }
+                else {
+                    if (submission == null) {
+                        res.json({"success": false, "message":"An error occured."})
+                    }
+                    else {
+                        console.log(submission)
+                        res.sendFile(submission.file.path, { root: path.join(__dirname, '../') });
+                    }
+                }
+            }
+        );
+    });
+
     app.get('/api/submission/photo/:submission_id', cors(corsOptionsDelegate), function(req, res) {
-        // Also wrap CORS around it so it can accept the parameter.
         // Need to redesign to handle and return multiple photos.
         try {
             SubmissionFile.findOne({submission_id : req.params.submission_id},
