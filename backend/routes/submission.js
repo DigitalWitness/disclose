@@ -123,7 +123,7 @@ module.exports = function(app) {
                     }
                     else {
                         console.log(submission)
-                        res.sendFile(submission.file.path, { root: path.join(__dirname, '../') });
+                        res.sendFile(submission.file.path, { root: path.join(__dirname, '../bin') });
                     }
                 }
             }
@@ -132,7 +132,7 @@ module.exports = function(app) {
 
     app.get('/api/submission/photo/:submission_id', cors(corsOptionsDelegate), function(req, res) {
         // Need to redesign to handle and return multiple photos.
-        try {
+        try { 
             SubmissionFile.findOne({submission_id : req.params.submission_id},
                 function(err, submission) {
                     if (err) {
@@ -145,7 +145,7 @@ module.exports = function(app) {
                         }
                         else {
                             console.log(submission)
-                            res.sendFile(submission.file.path, { root: path.join(__dirname, '../') });
+                            res.sendFile(submission.file.path, { root: path.join(__dirname, '../bin') });
                         }
                     }
                 });
