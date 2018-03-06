@@ -51,7 +51,7 @@ module.exports = function(app, passport) {
         });
 	});
 
-	app.post('/signup', cors(corsOptionsDelegate), (req, res, next) => {
+	app.post('/api/signup', cors(corsOptionsDelegate), (req, res, next) => {
 		console.log(req.body)
 		return passport.authenticate('local-signup', (err) => {
 			if (err) {
@@ -79,7 +79,7 @@ module.exports = function(app, passport) {
 		})(req, res, next);
 	});
 
-	app.post('/login', cors(corsOptionsDelegate), (req, res, next) => {
+	app.post('/api/login', cors(corsOptionsDelegate), (req, res, next) => {
 		return passport.authenticate('local-login', (err, token, userData) => {
 			if (err) {
 				if (err.name === 'IncorrectCredentialsError') {
