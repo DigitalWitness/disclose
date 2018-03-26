@@ -31,8 +31,8 @@ module.exports = function(app) {
 		});
 	});
 
-	app.delete('/api/submission', function(req, res){
-		Submission.remove({}, function(err) {
+	app.delete('/api/submission/:submission_id', cors(corsOptionsDelegate), function(req, res){
+		Submission.remove({submission_id : req.params.submission_id}, function(err) {
 			if (err) {
 				res.send(err);
 			}
@@ -47,11 +47,11 @@ module.exports = function(app) {
 		Submission.create({
 			user : req.body.user,
             submission_id : req.body.submission_id,
-            files : [],
-			content: {
-				messages : req.body.content.messages,
-				media : req.body.content.media
-			}
+                files : [],
+    			content: {
+    				messages : req.body.content.messages,
+    				media : req.body.content.media
+    			}
 		    },
             function(err, submission) {
     			if (err) {
