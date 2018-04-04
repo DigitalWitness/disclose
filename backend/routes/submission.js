@@ -2,6 +2,7 @@ var Submission = require('../models/submission.js').model;
 var SubmissionFile = require('../models/submission_file.js').model;
 var cors = require('cors');
 var path = require('path');
+var json2csv = require('json2csv').parse;
 
 var response_ok = {'success': true}
 var multer = require('multer');
@@ -43,25 +44,40 @@ module.exports = function(app) {
 	});
 
 	app.post('/api/submission', function(req, res) {
-        console.log(req.body)
-		Submission.create({
-			user : req.body.user,
-            submission_id : req.body.submission_id,
-                files : [],
-    			content: {
-    				messages : req.body.content.messages,
-    				media : req.body.content.media
-    			}
-		    },
-            function(err, submission) {
-    			if (err) {
-    				console.log("1: " + err);
-    				res.send(err);
-    			}
-    			else {
-    				res.send(response_ok);
-    			}
-            });
+    console.log(req.body)
+    var query = {
+      user : req.body.user,
+      submission_id : req.body.submission_id,
+      files : [],
+      content: {
+        messages : req.body.content.messages,
+        media : req.body.content.media
+      }
+    }
+		Submission.create(query, function(err, submission) {
+    		if (err) {
+    			console.log("1: " + err);
+    			res.send(err);
+    		}
+    		else {
+    			res.send(response_ok);
+    		}
+      });
+    });
+
+    app.get('/api/submissions.csv', cors(corsOptionsDelegate), function(req,res) {
+      console.log("Received export request")
+      Submission.find(function(err, submissions) {
+        if(err) {
+          res.send(err);
+        }
+        else {
+          var fields = ['user', 'submission_id', 'datetime', 'content.messages'];
+          var fieldNames = ['user', 'submission_id', 'date', 'messages'];
+          var csv = json2csv(submissions, {fields})
+          res.send(csv);
+        }
+      });
     });
 
     app.get('/api/submission/log/:submission_id', cors(corsOptionsDelegate), function(req, res) {
@@ -91,48 +107,49 @@ module.exports = function(app) {
         }
     });
 
-    app.get('/api/file/:submission_id', cors(corsOptionsDelegate), function(req,res) {
-        SubmissionFile.find({submission_id : req.params.submission_id}, {'file.filename': true, '_id': false},
-            function(err, submission) {
-                if (err) {
-                    console.log("1. " + err);
-                    res.send({"success": false, "message":"Download failed."});
+    // Endpoint for fetching file metadata
+    app.get('/api/file/meta/:submission_id', cors(corsOptionsDelegate), function(req,res) {
+        var query = {submission_id : req.params.submission_id};
+        var fields = {'file.filename': true, 'submission_type': true, '_id': false}
+        SubmissionFile.find(query , fields, function(err, submission) {
+            if (err) {
+                console.log("1. " + err);
+                res.send({"success": false, "message":"Download failed."});
+            }
+            else {
+                if (submission == null) {
+                    res.json({"success": false, "message":"Submission GUID not found."})
                 }
                 else {
-                    if (submission == null) {
-                        res.json({"success": false, "message":"Submission GUID not found."})
-                    }
-                    else {
-                        res.json(submission);
-                    }
+                    res.json(submission);
                 }
             }
-        );
+        });
     });
 
-    app.get('/api/file/photo/:submission_id/:filename', cors(corsOptionsDelegate), function(req, res) {
-        SubmissionFile.findOne({submission_id : req.params.submission_id, "file.filename": req.params.filename},
-            function(err, submission) {
-                if (err) {
-                    console.log("1. " + err);
-                    res.send({"success": false, "message":"Download failed."});
-                }
-                else {
-                    if (submission == null) {
-                        res.json({"success": false, "message":"An error occured."})
-                    }
-                    else {
-                        console.log(submission)
-                        res.sendFile(submission.file.path, { root: path.join(__dirname, '../bin') });
-                    }
-                }
-            }
-        );
+    // Endpoint for fetching file
+    app.get('/api/file/:submission_id/:filename', cors(corsOptionsDelegate), function(req, res) {
+        var query = {submission_id : req.params.submission_id, "file.filename": req.params.filename};
+        SubmissionFile.findOne(query, function(err, submission) {
+          if (err) {
+              console.log("1. " + err);
+              res.send({"success": false, "message":"Download failed."});
+          }
+          else {
+              if (submission == null) {
+                console.log("submission null")
+                res.json({"success": false, "message":"An error occured."})
+              }
+              else {
+                res.sendFile(submission.file.path, { root: path.join(__dirname, '../bin') });
+              }
+          }
+        });
     });
 
     app.get('/api/submission/photo/:submission_id', cors(corsOptionsDelegate), function(req, res) {
         // Need to redesign to handle and return multiple photos.
-        try { 
+        try {
             SubmissionFile.findOne({submission_id : req.params.submission_id},
                 function(err, submission) {
                     if (err) {
@@ -157,30 +174,29 @@ module.exports = function(app) {
         }
     });
 
-	app.post('/api/files', upload.array('files', 12), function (req, res) {
-        var file = req.files[0];
-        var submission_id = req.body.submission_id;
-		console.log(file);
-        console.log(submission_id);
-        try {
-            SubmissionFile.create({
-                submission_id : submission_id,
-                file : file
-            },
-            function(err, submission) {
-                if (err) {
-                    console.log("1: " + err);
-                    res.json({"success":false, "message": "Upload failed."});
-                }
-                else {
-                    console.log(submission);
-                    res.send({"success":true, "message": "Upload success."});
-                }
-            });
-        } catch (err) {
-			console.log(err);
-			res.json({"success":false, "message": "Upload failed."})
-		}
+   app.post('/api/files', upload.array('files', 12), function (req, res) {
+      var file = req.files[0];
+      var submission_id = req.body.submission_id;
+      var query = {
+          submission_id : req.body.submission_id,
+          submission_type : req.body.submission_type,
+          file : file
+      };
+      try {
+          SubmissionFile.create(query, function(err, submission) {
+              if (err) {
+                  console.log("1: " + err);
+                  res.json({"success":false, "message": "Upload failed."});
+              }
+              else {
+                  // console.log(submission);
+                  res.send({"success":true, "message": "Upload success."});
+              }
+          });
+      } catch (err) {
+    		console.log(err);
+    		res.json({"success":false, "message": "Upload failed."});
+		  }
 	});
 
 }
