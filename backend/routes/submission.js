@@ -75,7 +75,8 @@ module.exports = function(app) {
           var fields = ['user', 'submission_id', 'datetime', 'content.messages'];
           var fieldNames = ['user', 'submission_id', 'date', 'messages'];
           var csv = json2csv(submissions, {fields})
-          res.send(csv);
+          res.write(csv);
+          res.end()
         }
       });
     });
