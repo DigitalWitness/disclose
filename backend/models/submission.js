@@ -7,6 +7,7 @@ var Submission = mongoose.Schema({
 	datetime: {type : Date, default: Date.now},
 	submission_id: String,
 	location: Object,
+	tags : [], 
 	content : {
 		messages:[Messages],
 		media: [Media],

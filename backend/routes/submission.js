@@ -49,6 +49,7 @@ module.exports = function(app) {
       user : req.body.user,
       submission_id : req.body.submission_id,
       files : [],
+      tags : [],
       content: {
         messages : req.body.content.messages,
         media : req.body.content.media
@@ -64,6 +65,21 @@ module.exports = function(app) {
     		}
       });
     });
+
+    app.post('/api/submission/tags/:submission_id', cors(corsOptionsDelegate), function(req, res) {
+      var query = {submission_id : req.params.submission_id};
+      var update = {tags : req.body.tags};
+      var opts = {new : true}
+      Submission.findOneAndUpdate(query, update, opts, function(err, data) {
+        if (err) {
+          res.send(err);
+        }
+        else {
+          res.json(data);
+        }
+      });
+    })
+
 
     app.get('/api/submissions.csv', cors(corsOptionsDelegate), function(req,res) {
       console.log("Received export request")
@@ -146,33 +162,6 @@ module.exports = function(app) {
               }
           }
         });
-    });
-
-    app.get('/api/submission/photo/:submission_id', cors(corsOptionsDelegate), function(req, res) {
-        // Need to redesign to handle and return multiple photos.
-        try {
-            SubmissionFile.findOne({submission_id : req.params.submission_id},
-                function(err, submission) {
-                    if (err) {
-                        console.log("1. " + err);
-                        res.send({"success": false, "message":"Download failed."});
-                    }
-                    else {
-                        if (submission == null) {
-                            res.json({"success": false, "message":"Submission GUID not found."})
-                        }
-                        else {
-                            console.log(submission)
-                            res.sendFile(submission.file.path, { root: path.join(__dirname, '../bin') });
-                        }
-                    }
-                });
-        }
-        catch (err) {
-            console.log("Submission GUID not found");
-            console.log(err);
-            res.send({"success": false, "message":err});
-        }
     });
 
    app.post('/api/files', upload.array('files', 12), function (req, res) {
