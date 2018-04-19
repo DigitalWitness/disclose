@@ -44,12 +44,13 @@ module.exports = function(app) {
 	});
 
 	app.post('/api/submission', function(req, res) {
-    console.log(req.body)
+    console.log(req.body);
     var query = {
       user : req.body.user,
       submission_id : req.body.submission_id,
       files : [],
       tags : [],
+      location : [req.body.latitude, req.body.longitude],
       content: {
         messages : req.body.content.messages,
         media : req.body.content.media
